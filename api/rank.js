@@ -9,11 +9,14 @@ module.exports = async (req, res) => {
     const { data } = await axios.get(profileUrl);
     console.log('Page fetched successfully.');
 
-    // Check if the content is loaded correctly
-    console.log(data); // Log the HTML content for debugging
+    // Log the HTML content for debugging
+    console.log('HTML Content:', data.substring(0, 500)); // Log only the first 500 characters of the HTML content for brevity
 
     // Load the page's HTML content with Cheerio
     const $ = cheerio.load(data);
+
+    // Debug: log the structure of the profile to check if we're targeting the right elements
+    console.log('Profile Ranks Structure:', $('div.profile-rank__title').length);
 
     // Extract the "Ranked Reload ZB" rank data
     const rank = $('div.profile-rank__title')
@@ -31,18 +34,23 @@ module.exports = async (req, res) => {
       .text()
       .trim();
 
-    console.log('Extracted rank:', rank); // Log the extracted rank
-    console.log('Rank number:', rankNumber); // Log the extracted rank number
+    // Debug: log the rank and rank number to see what was extracted
+    console.log('Extracted Rank:', rank);
+    console.log('Extracted Rank Number:', rankNumber);
 
     if (rank && rankNumber) {
       // Send the rank and rank number as a JSON response
       res.status(200).json({ rank, rankNumber });
     } else {
       // If rank is not found, send a fallback message
-      res.status(200).json({ rank: 'Rank not found', rankNumber: 'Rank number not found' });
+      res.status(404).json({ error: 'Rank or Rank number not found' });
     }
   } catch (error) {
-    console.error('Error fetching rank:', error);
-    res.status(500).json({ error: 'Failed to fetch rank' }); // Send 500 error if something goes wrong
+    // Log detailed error information
+    console.error('Error occurred during rank fetch:', error.message);
+    console.error('Error stack trace:', error.stack);
+
+    // Send 500 error if something goes wrong
+    res.status(500).json({ error: 'Failed to fetch rank' });
   }
 };
