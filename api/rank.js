@@ -9,6 +9,9 @@ module.exports = async (req, res) => {
     const { data } = await axios.get(profileUrl);
     console.log('Page fetched successfully.');
 
+    // Check if the content is loaded correctly
+    console.log(data); // Log the HTML content for debugging
+
     // Load the page's HTML content with Cheerio
     const $ = cheerio.load(data);
 
