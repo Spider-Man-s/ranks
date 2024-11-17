@@ -5,13 +5,20 @@ module.exports = async (req, res) => {
   try {
     const url = 'https://fortnitetracker.com/profile/all/Lcyaa';
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data from FortniteTracker: ${response.statusText}`);
+    }
 
     const html = await response.text();
     const $ = cheerio.load(html);
 
     const rankedReloadZBContainer = $('.profile-rank')
       .filter((_, el) => $(el).find('.profile-rank__title').text().trim() === 'Ranked Reload ZB');
+
+    if (rankedReloadZBContainer.length === 0) {
+      throw new Error('Ranked Reload ZB not found');
+    }
 
     const rankValue = rankedReloadZBContainer.find('.profile-rank__value').text().trim();
     const rankNumber = rankedReloadZBContainer.find('.profile-rank__rank').text().trim();
@@ -20,7 +27,7 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(200).send(result || 'Rank not found');
   } catch (error) {
-    console.error('Error in getrank function:', error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error:', error);  // Log the error for debugging
+    res.status(500).send(`Internal Server Error: ${error.message}`);
   }
 };
