@@ -1,8 +1,10 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  const { profileUrl } = req.query; // Get the profile URL from the query parameters
+  // Get the profileUrl from the query parameter
+  const { profileUrl } = req.query;
 
+  // If the profile URL is missing, return a bad request error
   if (!profileUrl) {
     return res.status(400).json({ error: 'Profile URL is required' });
   }
@@ -20,10 +22,12 @@ module.exports = async (req, res) => {
       }),
     });
 
+    // Get the JSON response from the Apify API
     const data = await response.json();
 
+    // If the actor ran successfully, return the data
     if (response.ok) {
-      res.status(200).json(data); // Return Apify run data
+      res.status(200).json(data); // Return the Apify actor run data
     } else {
       res.status(500).json({ error: 'Failed to trigger Apify actor' });
     }
