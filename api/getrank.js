@@ -1,37 +1,22 @@
-const fetch = require('node-fetch');
-const cheerio = require('cheerio');
+const { chromium } = require('playwright'); // Importing Chromium from Playwright
 
-module.exports = async (req, res) => {
-  try {
-    const url = 'https://fortnitetracker.com/profile/all/Lcyaa';
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
+(async () => {
+  // Launch a headless browser instance
+  const browser = await chromium.launch({ headless: true }); // or { headless: false } to see the browser
+  const page = await browser.newPage();
+  
+  // Go to the Fortnite Tracker page
+  await page.goto('https://fortnitetracker.com/profile/all/Lcyaa');
+  
+  // Extract rank data from the page using a selector
+  const rank = await page.$eval('.profile-rank', el => {
+    const rankValue = el.querySelector('.profile-rank__value')?.textContent;
+    const rankNumber = el.querySelector('.profile-rank__rank')?.textContent;
+    return rankValue + (rankNumber ? ` ${rankNumber}` : '');
+  });
+  
+  console.log('Rank:', rank); // Output the result to the console
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data from FortniteTracker: ${response.statusText}`);
-    }
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-
-    const rankedReloadZBContainer = $('.profile-rank')
-      .filter((_, el) => $(el).find('.profile-rank__title').text().trim() === 'Ranked Reload ZB');
-
-    if (rankedReloadZBContainer.length === 0) {
-      throw new Error('Ranked Reload ZB not found');
-    }
-
-    const rankValue = rankedReloadZBContainer.find('.profile-rank__value').text().trim();
-    const rankNumber = rankedReloadZBContainer.find('.profile-rank__rank').text().trim();
-    const result = rankValue + (rankNumber ? ` ${rankNumber}` : '');
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.status(200).send(result || 'Rank not found');
-  } catch (error) {
-    console.error('Error:', error);  // Log the error for debugging
-    res.status(500).send(`Internal Server Error: ${error.message}`);
-  }
-};
+  // Close the browser instance
+  await browser.close();
+})();
