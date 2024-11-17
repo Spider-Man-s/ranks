@@ -1,37 +1,31 @@
-const fetch = require('node-fetch');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
-module.exports = async (req, res) => {
-  // Get the profileUrl from the query parameter
-  const { profileUrl } = req.query;
-
-  // If the profile URL is missing, return a bad request error
-  if (!profileUrl) {
-    return res.status(400).json({ error: 'Profile URL is required' });
-  }
+// Scrape the Fortnite profile rank from Tracker (using fixed URL)
+async function getRank() {
+  const profileUrl = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Fixed URL
 
   try {
-    // Trigger your Apify actor using the Apify API
-    const response = await fetch('https://api.apify.com/v2/acts/<your-apify-actor-id>/runs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Apify ${process.env.APIFY_API_KEY}`, // Use your Apify API key here
-      },
-      body: JSON.stringify({
-        startUrls: [{ url: profileUrl }], // Pass the Fortnite profile URL to the actor
-      }),
-    });
+    // Fetch the page
+    const { data } = await axios.get(profileUrl);
 
-    // Get the JSON response from the Apify API
-    const data = await response.json();
+    // Use Cheerio to parse the HTML and extract rank data
+    const $ = cheerio.load(data);
 
-    // If the actor ran successfully, return the data
-    if (response.ok) {
-      res.status(200).json(data); // Return the Apify actor run data
-    } else {
-      res.status(500).json({ error: 'Failed to trigger Apify actor' });
-    }
+    // Find the 'Ranked Reload ZB' rank
+    const rank = $('div.profile-rank__title')
+      .filter((i, el) => $(el).text().includes('Ranked Reload ZB')) // Find the correct rank
+      .next() // Navigate to the next div that contains the rank value
+      .find('div.profile-rank__value') // Get the rank value
+      .text()
+      .trim();
+
+    return rank || 'Rank not found'; // Return rank or a fallback if not found
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error fetching rank:', error);
+    return 'Error fetching rank';
   }
-};
+}
+
+// Export the function for external use
+module.exports = { getRank };
