@@ -5,8 +5,16 @@ module.exports = async (req, res) => {
   const profileUrl = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Replace with the desired profile URL
 
   try {
-    // Fetch the profile page
-    const { data } = await axios.get(profileUrl);
+    // Set up custom headers to simulate a real browser request
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+    };
+
+    // Fetch the profile page with custom headers
+    const { data } = await axios.get(profileUrl, { headers });
 
     // Load the page's HTML content with Cheerio
     const $ = cheerio.load(data);
