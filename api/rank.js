@@ -1,39 +1,48 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { send } = require('@vercel/node');
 
-const getRank = async (req, res) => {
-  const username = 'Lcyaa'; // Replace with your Fortnite username or pass it dynamically
+// Function to fetch the rank
+const getRank = async (username) => {
   const url = `https://fortnitetracker.com/profile/all/${username}`;
 
   try {
     // Fetch the page's HTML
     const response = await axios.get(url);
-    
+
+    // Check if the request was successful
+    if (response.status !== 200) {
+      console.error(`Failed to fetch page with status code: ${response.status}`);
+      return;
+    }
+
     // Load the HTML content into Cheerio
     const $ = cheerio.load(response.data);
 
-    // Extract the rank information from the page
+    // Find the rank element by searching for the appropriate class or text
     const rankElement = $('.profile-current-ranks__content');
-    const rankedReloadZb = rankElement
+
+    // Extract rank information
+    const rankedBR = rankElement
       .find('.profile-rank__title')
-      .filter((_, element) => $(element).text().includes('Ranked Reload ZB'))
+      .filter((_, element) => $(element).text().includes('Ranked BR'))
       .next()
       .find('.profile-rank__value')
       .text()
       .trim();
 
-    // If no rank is found, return a default message
-    if (!rankedReloadZb) {
-      return res.status(404).json({ error: 'Rank not found' });
+    // Check if a rank was found
+    if (!rankedBR) {
+      console.log('Rank not found!');
+      return;
     }
 
-    // Send back the rank data in the response
-    res.status(200).json({ rank: rankedReloadZb });
+    // Print the rank
+    console.log(`Rank for ${username}: ${rankedBR}`);
   } catch (error) {
-    console.error('Error fetching rank:', error);
-    res.status(500).json({ error: 'Failed to fetch rank', details: error.message });
+    console.error('Error fetching rank:', error.message);
   }
 };
 
-module.exports = getRank;
+// Example: Fetch the rank for a given username
+const username = 'Lcyaa'; // Replace with the desired Fortnite username
+getRank(username);
