@@ -4,7 +4,7 @@ const cheerio = require('cheerio');
 // Scrape the Fortnite profile rank from Tracker (using fixed URL)
 async function getRank() {
   const profileUrl = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Fixed URL
-
+//4b095efa978a30e3f3ae7020b8808611
   try {
     // Fetch the page
     const { data } = await axios.get(profileUrl);
