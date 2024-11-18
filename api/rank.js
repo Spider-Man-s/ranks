@@ -1,49 +1,40 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
 
 module.exports = async (req, res) => {
-  const profileUrl = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Replace with the desired profile URL
+  const url = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Replace with your target URL
 
   try {
-    // Set up custom headers to simulate a real browser request
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Connection': 'keep-alive',
-    };
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+    });
 
-    // Fetch the profile page with custom headers
-    const { data } = await axios.get(profileUrl, { headers });
+    // Extract rank data
+    const data = await page.evaluate(() => {
+      const rankedBR = document.querySelector(
+        'div.profile-rank__title:contains("Ranked Reload ZB")'
+      );
 
-    // Load the page's HTML content with Cheerio
-    const $ = cheerio.load(data);
+      if (rankedBR) {
+        const rank = rankedBR.nextElementSibling.querySelector('.profile-rank__value')
+          ?.innerText;
+        const rankNumber = rankedBR.nextElementSibling.querySelector('.profile-rank__rank')
+          ?.innerText;
+        return { rank, rankNumber };
+      }
 
-    // Extract the "Ranked Reload ZB" rank data
-    const rank = $('div.profile-rank__title')
-      .filter((i, el) => $(el).text().includes('Ranked Reload ZB')) // Look for the "Ranked Reload ZB" section
-      .next() // Get the next div containing the rank value
-      .find('div.profile-rank__value') // Find the rank value
-      .text()
-      .trim();
+      return null;
+    });
 
-    // Extract the specific rank number (e.g., #6,642)
-    const rankNumber = $('div.profile-rank__title')
-      .filter((i, el) => $(el).text().includes('Ranked Reload ZB')) // Filter for "Ranked Reload ZB"
-      .next() // Get the next div that contains the rank
-      .find('div.profile-rank__rank') // Find the rank number
-      .text()
-      .trim();
+    await browser.close();
 
-    if (rank && rankNumber) {
-      // Send the rank and rank number as a JSON response
-      res.status(200).json({ rank, rankNumber });
+    if (data) {
+      res.status(200).json(data);
     } else {
-      // If rank is not found, send a fallback message
-      res.status(404).json({ error: 'Rank or Rank number not found' });
+      res.status(404).json({ error: 'Rank not found' });
     }
   } catch (error) {
-    // Send 500 error if something goes wrong
-    res.status(500).json({ error: 'Failed to fetch rank' });
+    res.status(500).json({ error: 'Failed to fetch rank', details: error.toString() });
   }
 };
