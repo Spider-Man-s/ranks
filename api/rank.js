@@ -1,29 +1,26 @@
 // Import necessary modules
 import fetch from 'node-fetch';
-import cheerio from 'cheerio';
 
 // Vercel serverless function entry point
 export default async (req, res) => {
   try {
-    // Scraper API URL
-    const url = 'https://api.scraperapi.com/?api_key=4b095efa978a30e3f3ae7020b8808611&url=https%3A%2F%2Ffortnitetracker.com%2Fprofile%2Fall%2FLcyaa&autoparse=true';
-
     // Fetch data from the Scraper API
+    const url = 'https://api.scraperapi.com/?api_key=4b095efa978a30e3f3ae7020b8808611&url=https%3A%2F%2Ffortnitetracker.com%2Fprofile%2Fall%2FLcyaa&autoparse=true';
     const response = await fetch(url);
-    const html = await response.text();
+    const jsonData = await response.json(); // Parse response as JSON
 
-    // Load the HTML into cheerio for parsing
-    const $ = cheerio.load(html);
+    // Extract "Ranked Reload Zero Build" rank if available
+    const rankedReloadZB = jsonData.rankedStats?.find(stat => stat.modeName === "Ranked Reload ZB");
 
-    // Select the relevant element containing the "Reload Zero Build" rank
-    const rankElement = $('div.profile-current-ranks .profile-rank__wrapper .profile-rank__value:contains("Reload Zero Build")')
-      .next()
-      .text()
-      .trim();
-
-    // Return the extracted rank
-    res.status(200).json({ rank: rankElement });
+    // Check if rank data was found
+    if (rankedReloadZB) {
+      const rank = rankedReloadZB.rank; // Extract rank
+      res.status(200).json({ rank });
+    } else {
+      res.status(404).json({ error: "Ranked Reload Zero Build rank not found." });
+    }
   } catch (error) {
+    // Handle any errors
     res.status(500).json({ error: 'Error fetching or parsing data', details: error.message });
   }
 };
