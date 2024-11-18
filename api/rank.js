@@ -22,14 +22,16 @@ const getRank = async (req, res) => {
     // Parse HTML content using Cheerio
     const $ = cheerio.load(htmlContent);
 
-    // Extract the rank information for "Ranked Reload ZB"
-    const rankElement = $('.profile-current-ranks__content');
+    // Use the provided selector to get the rank container
+    const rankElement = $('#overview > div.trn-grid.trn-grid__sidebar-right > aside > div.trn-grid.trn-grid--vertical > div.profile-current-ranks.trn-card.trn-card--no-overflow');
+
+    // Find the specific rank for "Ranked Reload ZB"
     const rankedReloadZb = rankElement
       .find('.profile-rank')
       .filter((_, element) => {
         return $(element).find('.profile-rank__title').text().includes('Ranked Reload ZB');
       })
-      .find('.profile-rank__value') // Find the rank value within the selected rank
+      .find('.profile-rank__value')
       .text()
       .trim();
 
@@ -47,3 +49,4 @@ const getRank = async (req, res) => {
 };
 
 module.exports = getRank;
+
