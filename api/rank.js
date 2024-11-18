@@ -1,27 +1,33 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// Function to fetch the rank
-const getRank = async (username) => {
+// Handler function for Vercel or local usage
+const handler = async (req, res) => {
+  const username = 'Lcyaa'; // You can modify this to dynamically accept a username
+
   const url = `https://fortnitetracker.com/profile/all/${username}`;
 
   try {
-    // Fetch the page's HTML
-    const response = await axios.get(url);
+    // Sending request with headers to mimic a real browser
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Connection': 'keep-alive',
+      }
+    });
 
-    // Check if the request was successful
     if (response.status !== 200) {
-      console.error(`Failed to fetch page with status code: ${response.status}`);
-      return;
+      return res.status(500).json({ error: `Failed to fetch data, status code: ${response.status}` });
     }
 
-    // Load the HTML content into Cheerio
+    // Parse the HTML with cheerio
     const $ = cheerio.load(response.data);
 
-    // Find the rank element by searching for the appropriate class or text
+    // Extract rank info from the profile page
     const rankElement = $('.profile-current-ranks__content');
 
-    // Extract rank information
+    // Extract specific rank values, e.g., "Ranked BR"
     const rankedBR = rankElement
       .find('.profile-rank__title')
       .filter((_, element) => $(element).text().includes('Ranked BR'))
@@ -30,19 +36,16 @@ const getRank = async (username) => {
       .text()
       .trim();
 
-    // Check if a rank was found
     if (!rankedBR) {
-      console.log('Rank not found!');
-      return;
+      return res.status(404).json({ error: 'Rank not found' });
     }
 
-    // Print the rank
-    console.log(`Rank for ${username}: ${rankedBR}`);
+    // Send back the rank data as JSON
+    res.status(200).json({ rank: rankedBR });
   } catch (error) {
     console.error('Error fetching rank:', error.message);
+    res.status(500).json({ error: 'Failed to fetch rank', details: error.message });
   }
 };
 
-// Example: Fetch the rank for a given username
-const username = 'Lcyaa'; // Replace with the desired Fortnite username
-getRank(username);
+module.exports = handler;
