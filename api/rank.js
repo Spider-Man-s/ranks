@@ -1,6 +1,6 @@
 // api/fortniteRank.js
-import fetch from 'node-fetch';
-import cheerio from 'cheerio';
+const fetch = require('node-fetch');
+const cheerio = require('cheerio');
 
 export default async function handler(req, res) {
   // The API key and URL for scraping Fortnite Tracker profile
