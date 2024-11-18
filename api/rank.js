@@ -16,37 +16,12 @@ async function fetchRankData() {
       }
     });
 
-    const html = response.data;
+    // Print out the raw HTML response
+    console.log('Fetched HTML:', response.data);
 
-    // Now, parse the HTML to extract rank data using a method like Cheerio or DOMParser
-    const cheerio = require('cheerio'); // Use Cheerio to parse the HTML
-    const $ = cheerio.load(html);
+    // You can then parse this HTML to find specific elements like rank data
+    // (use this data to guide the next steps of extraction)
 
-    // Scrape the rank data (by targeting the elements that hold rank values)
-    const ranks = [];
-
-    // Extract Ranked BR
-    const rankedBR = $('.profile-rank__title:contains("Ranked BR")').next('.profile-rank__container')
-      .find('.profile-rank__value').text().trim();
-    ranks.push({ title: 'Ranked BR', rank: rankedBR });
-
-    // Extract Ranked ZB
-    const rankedZB = $('.profile-rank__title:contains("Ranked ZB")').next('.profile-rank__container')
-      .find('.profile-rank__value').text().trim();
-    ranks.push({ title: 'Ranked ZB', rank: rankedZB });
-
-    // Extract Ranked Reload BR
-    const rankedReloadBR = $('.profile-rank__title:contains("Ranked Reload BR")').next('.profile-rank__container')
-      .find('.profile-rank__value').text().trim();
-    ranks.push({ title: 'Ranked Reload BR', rank: rankedReloadBR });
-
-    // Extract Ranked Reload ZB
-    const rankedReloadZB = $('.profile-rank__title:contains("Ranked Reload ZB")').next('.profile-rank__container')
-      .find('.profile-rank__value').text().trim();
-    ranks.push({ title: 'Ranked Reload ZB', rank: rankedReloadZB });
-
-    // Output the ranks
-    console.log(ranks);
   } catch (error) {
     console.error('Error fetching or parsing data:', error);
   }
