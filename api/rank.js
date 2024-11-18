@@ -1,5 +1,6 @@
 // api/fortniteRank.js
 import fetch from 'node-fetch';
+import cheerio from 'cheerio';
 
 export default async function handler(req, res) {
   // The API key and URL for scraping Fortnite Tracker profile
@@ -9,26 +10,31 @@ export default async function handler(req, res) {
   // Scrape the data using ScraperAPI
   try {
     const response = await fetch(`https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(profileUrl)}`);
-    const data = await response.json();
 
-    // Find the 'Ranked Reload ZB' data from the rankedStats array
-    const rankedReloadData = data.rankedStats.find(
-      (stat) => stat.modeName === 'Ranked Reload ZB' && stat.season === 32
-    );
+    // Get the response as HTML text
+    const html = await response.text();
 
-    // If the data is found, extract the rank and current division
-    if (rankedReloadData) {
-      const currentDivision = rankedReloadData.currentDivisionName; // e.g., "Unreal"
-      const rank = rankedReloadData.rank; // e.g., 6642
-      
-      // Send the response back to the client
+    // Load the HTML into cheerio for parsing
+    const $ = cheerio.load(html);
+
+    // Find the rank and current division in the HTML
+    const rankElement = $('img[src*="ranks/18.png"]').parent().text().trim();  // Find the image that represents the rank
+    const divisionElement = $('img[src*="ranks/18.png"]').closest('div').prev().text().trim();  // Get the division name
+
+    if (rankElement && divisionElement) {
+      // Extract the rank (e.g., 6642)
+      const rankMatch = rankElement.match(/\d+/);
+      const rank = rankMatch ? rankMatch[0] : null;
+
+      // Send the rank and division in the response
       res.status(200).json({
-        currentDivision: currentDivision,
-        rank: rank,
+        currentDivision: divisionElement,  // Division name (e.g., "Unreal")
+        rank: rank,  // Rank (e.g., 6642)
       });
     } else {
-      res.status(404).json({ message: 'No data found for "Ranked Reload ZB" in season 32.' });
+      res.status(404).json({ message: 'Rank or division not found in the HTML.' });
     }
+
   } catch (error) {
     // Handle any errors that occur during the fetch operation
     console.error('Error fetching data:', error);
