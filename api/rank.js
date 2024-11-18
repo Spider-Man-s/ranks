@@ -1,40 +1,36 @@
-const puppeteer = require('puppeteer');
+const chromium = require('chrome-aws-lambda');
+const puppeteer = require('puppeteer-core');
 
 module.exports = async (req, res) => {
-  const url = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Replace with your target URL
-
+  let browser;
   try {
-    const browser = await puppeteer.launch({ headless: true });
+    // Launch Puppeteer with chrome-aws-lambda configuration
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath || '/usr/bin/chromium-browser',
+      headless: chromium.headless,
+    });
+
     const page = await browser.newPage();
+    const url = 'https://fortnitetracker.com/profile/some-profile'; // Replace with your desired URL
+    
     await page.goto(url, {
-      waitUntil: 'networkidle2',
+      waitUntil: 'networkidle2', // Wait until the network is idle
     });
 
-    // Extract rank data
-    const data = await page.evaluate(() => {
-      const rankedBR = document.querySelector(
-        'div.profile-rank__title:contains("Ranked Reload ZB")'
-      );
-
-      if (rankedBR) {
-        const rank = rankedBR.nextElementSibling.querySelector('.profile-rank__value')
-          ?.innerText;
-        const rankNumber = rankedBR.nextElementSibling.querySelector('.profile-rank__rank')
-          ?.innerText;
-        return { rank, rankNumber };
-      }
-
-      return null;
+    // Extract rank data from the page using appropriate selectors
+    const rankData = await page.evaluate(() => {
+      const rankElement = document.querySelector('.profile-current-ranks__content .profile-rank__value');
+      return rankElement ? rankElement.textContent.trim() : 'Rank not found';
     });
 
-    await browser.close();
-
-    if (data) {
-      res.status(200).json(data);
-    } else {
-      res.status(404).json({ error: 'Rank not found' });
-    }
+    res.status(200).json({ rank: rankData });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch rank', details: error.toString() });
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 };
