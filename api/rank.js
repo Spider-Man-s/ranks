@@ -1,58 +1,52 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
 
 const scraperApiKey = '4b095efa978a30e3f3ae7020b8808611';  // Replace with your ScraperAPI key
+const profileURL = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Replace with the profile URL you want to scrape
 
-const getRank = async (req, res) => {
-  const username = 'Lcyaa'; // Replace with the Fortnite username
-  const url = `https://fortnitetracker.com/profile/all/${username}`;
-
+async function fetchRankData() {
   try {
-    // Send the request to ScraperAPI to avoid getting blocked
-    const response = await axios.get(`http://api.scraperapi.com`, {
+    // Make a request to Scraper API with the profile URL
+    const response = await axios.get(`https://api.scraperapi.com`, {
       params: {
-        api_key: scraperApiKey,  // Your ScraperAPI key
-        url: url,  // The URL to scrape
-      },
+        api_key: scraperApiKey,
+        url: profileURL,
+        render: true // Make sure rendering is enabled
+      }
     });
 
-    // Log the response HTML for debugging
-    console.log("HTML content fetched from ScraperAPI:\n", response.data);
+    const html = response.data;
 
-    // Load the HTML content into Cheerio
-    const $ = cheerio.load(response.data);
+    // Now, parse the HTML to extract rank data using a method like Cheerio or DOMParser
+    const cheerio = require('cheerio'); // Use Cheerio to parse the HTML
+    const $ = cheerio.load(html);
 
-    // Log the structure of the loaded HTML to confirm the rank element exists
-    console.log("Parsed HTML:\n", $.html());
+    // Scrape the rank data (by targeting the elements that hold rank values)
+    const ranks = [];
 
-    // Use the new provided selector to target the correct rank element
-    const rankElement = $("#overview > div.trn-grid.trn-grid__sidebar-right > aside > div.trn-grid.trn-grid--vertical > div.profile-current-ranks.trn-card.trn-card--no-overflow > div > div:nth-child(4) > div.profile-rank__container > div");
+    // Extract Ranked BR
+    const rankedBR = $('.profile-rank__title:contains("Ranked BR")').next('.profile-rank__container')
+      .find('.profile-rank__value').text().trim();
+    ranks.push({ title: 'Ranked BR', rank: rankedBR });
 
-    // Log the rank element for debugging
-    console.log("Rank element found:\n", rankElement.html());
+    // Extract Ranked ZB
+    const rankedZB = $('.profile-rank__title:contains("Ranked ZB")').next('.profile-rank__container')
+      .find('.profile-rank__value').text().trim();
+    ranks.push({ title: 'Ranked ZB', rank: rankedZB });
 
-    // Extract the rank value
-    const rankedReloadZb = rankElement
-      .find('.profile-rank__value')
-      .text()
-      .trim();
+    // Extract Ranked Reload BR
+    const rankedReloadBR = $('.profile-rank__title:contains("Ranked Reload BR")').next('.profile-rank__container')
+      .find('.profile-rank__value').text().trim();
+    ranks.push({ title: 'Ranked Reload BR', rank: rankedReloadBR });
 
-    // Log the rank value for debugging
-    console.log("Ranked Reload ZB:", rankedReloadZb);
+    // Extract Ranked Reload ZB
+    const rankedReloadZB = $('.profile-rank__title:contains("Ranked Reload ZB")').next('.profile-rank__container')
+      .find('.profile-rank__value').text().trim();
+    ranks.push({ title: 'Ranked Reload ZB', rank: rankedReloadZB });
 
-    // If the rank is not found, return an error message
-    if (!rankedReloadZb) {
-      return res.status(404).json({ error: 'Rank not found' });
-    }
-
-    // Send back the rank data in the response
-    res.status(200).json({ rank: rankedReloadZb });
+    // Output the ranks
+    console.log(ranks);
   } catch (error) {
-    console.error('Error fetching rank:', error);
-    res.status(500).json({ error: 'Failed to fetch rank', details: error.message });
+    console.error('Error fetching or parsing data:', error);
   }
-};
+}
 
-module.exports = getRank;
-
-
+fetchRankData();
