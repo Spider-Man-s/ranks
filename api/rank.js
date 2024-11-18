@@ -16,20 +16,29 @@ const getRank = async (req, res) => {
       },
     });
 
-    // Load the HTML content from ScraperAPI
-    const htmlContent = response.data;
+    // Log the response HTML for debugging
+    console.log("HTML content fetched from ScraperAPI:\n", response.data);
 
-    // Parse HTML content using Cheerio
-    const $ = cheerio.load(htmlContent);
+    // Load the HTML content into Cheerio
+    const $ = cheerio.load(response.data);
+
+    // Log the structure of the loaded HTML to confirm the rank element exists
+    console.log("Parsed HTML:\n", $.html());
 
     // Use the new provided selector to target the correct rank element
-    const rankElement = $("#overview > div.trn-grid.trn-grid__sidebar-right > aside > div.trn-grid.trn-grid--vertical > div.profile-current-ranks.trn-card.trn-card--no-overflow > div > div:nth-child(4)");
+    const rankElement = $("#overview > div.trn-grid.trn-grid__sidebar-right > aside > div.trn-grid.trn-grid--vertical > div.profile-current-ranks.trn-card.trn-card--no-overflow > div > div:nth-child(4) > div.profile-rank__container > div");
+
+    // Log the rank element for debugging
+    console.log("Rank element found:\n", rankElement.html());
 
     // Extract the rank value
     const rankedReloadZb = rankElement
       .find('.profile-rank__value')
       .text()
       .trim();
+
+    // Log the rank value for debugging
+    console.log("Ranked Reload ZB:", rankedReloadZb);
 
     // If the rank is not found, return an error message
     if (!rankedReloadZb) {
