@@ -1,7 +1,7 @@
 
 const scraperApiKey = '4b095efa978a30e3f3ae7020b8808611';  // Replace with your ScraperAPI key
 const profileURL = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Replace with the profile URL you want to scrape
-
+const axios = require('axios');
 async function fetchRankData() {
   try {
     // Make a request to Scraper API with the profile URL
