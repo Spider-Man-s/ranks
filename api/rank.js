@@ -1,32 +1,29 @@
+// Import necessary modules
+import fetch from 'node-fetch';
+import cheerio from 'cheerio';
 
-const scraperApiKey = '4b095efa978a30e3f3ae7020b8808611';  // Replace with your ScraperAPI key
-const axios = require('axios'); // Import axios
-
-const profileURL = 'https://fortnitetracker.com/profile/all/Lcyaa'; // Replace with the profile URL you want to scrape
-
-// Handler function for the API
-async function fetchRankData(req, res) {
+// Vercel serverless function entry point
+export default async (req, res) => {
   try {
-    // Make a request to Scraper API with the profile URL
-    const response = await axios.get('https://api.scraperapi.com', {
-      params: {
-        api_key: scraperApiKey,
-        url: profileURL,
-        render: true // Ensure rendering is enabled
-      }
-    });
+    // Scraper API URL
+    const url = 'https://api.scraperapi.com/?api_key=4b095efa978a30e3f3ae7020b8808611&url=https%3A%2F%2Ffortnitetracker.com%2Fprofile%2Fall%2FLcyaa&autoparse=true';
 
-    // Log the fetched HTML (for debugging)
-    console.log('Fetched HTML:', response.data);
+    // Fetch data from the Scraper API
+    const response = await fetch(url);
+    const html = await response.text();
 
-    // Send back the HTML or any parsed data you need
-    res.json({ html: response.data });
+    // Load the HTML into cheerio for parsing
+    const $ = cheerio.load(html);
 
+    // Select the relevant element containing the "Reload Zero Build" rank
+    const rankElement = $('div.profile-current-ranks .profile-rank__wrapper .profile-rank__value:contains("Reload Zero Build")')
+      .next()
+      .text()
+      .trim();
+
+    // Return the extracted rank
+    res.status(200).json({ rank: rankElement });
   } catch (error) {
-    console.error('Error fetching or parsing data:', error);
-    res.status(500).json({ error: 'Error fetching or parsing data' });
+    res.status(500).json({ error: 'Error fetching or parsing data', details: error.message });
   }
-}
-
-// Export the handler so it can be used by the serverless platform
-module.exports = fetchRankData;
+};
