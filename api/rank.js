@@ -38,12 +38,11 @@ export default async function handler(req, res) {
     const highestRank = parseInt(highestRankMatch[1], 10);
     const currentDivisionName = divisionNameMatch[1];
 
-    // Send the extracted data as JSON
-    res.status(200).json({
-      rank,
-      highestRank,
-      currentDivisionName,
-    });
+    // Return the formatted response
+    const rankMessage = `Lcyas rank in Ranked Reload ZB is: ${currentDivisionName} #${rank} (peak #${highestRank})`;
+
+    // Send the formatted message as the response
+    res.status(200).json({ message: rankMessage });
   } catch (error) {
     console.error("Error processing data:", error);
     res.status(500).json({
