@@ -15,8 +15,8 @@ export default async function handler(req, res) {
     // Get the response as plain text
     const html = await response.text();
 
-    // Search for the "Ranked Reload" string
-    const startIndex = html.indexOf('"Ranked Reload"');
+    // Search for the "modeName":"Ranked Reload ZB" string
+    const startIndex = html.indexOf('"modeName":"Ranked Reload ZB"');
     if (startIndex === -1) {
       throw new Error("Ranked Reload data not found in response.");
     }
