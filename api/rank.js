@@ -1,42 +1,54 @@
-const { execFile } = require('child_process');
-const fetch = require('node-fetch');
-const path = require('path');
+const fetch = require("node-fetch");
 
 export default async function handler(req, res) {
+  const apiKey = "4b095efa978a30e3f3ae7020b8808611";
+  const url =
+    "https://api.scraperapi.com/?api_key=4b095efa978a30e3f3ae7020b8808611&url=https%3A%2F%2Ffortnitetracker.com%2Fprofile%2Fall%2FLcyaa";
+
   try {
-    // Fetch the scraper response
-    const response = await fetch('https://api.scraperapi.com/?api_key=4b095efa978a30e3f3ae7020b8808611&url=https%3A%2F%2Ffortnitetracker.com%2Fprofile%2Fall%2FLcyaa');
+    // Fetch the HTML content via ScraperAPI
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    // Get the response as plain text
     const html = await response.text();
 
-    // Path to the Python script
-    const scriptPath = path.join(__dirname, 'extract_ranked_data.py');
+    // Search for the "Ranked Reload" string
+    const startIndex = html.indexOf('"Ranked Reload"');
+    if (startIndex === -1) {
+      throw new Error("Ranked Reload data not found in response.");
+    }
 
-    // Run the Python script with the HTML as input
-    execFile('python3', [scriptPath], { input: html }, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Error processing data', details: error.message });
-        return;
-      }
-      if (stderr) {
-        console.error('Stderr:', stderr);
-        res.status(500).json({ message: 'Error in Python script', details: stderr });
-        return;
-      }
+    // Extract the portion of the text starting at the found index
+    const snippet = html.slice(startIndex, startIndex + 1000); // Capture 1000 characters for processing
 
-      // Parse the Python script output
-      const result = JSON.parse(stdout);
-      if (result.error) {
-        res.status(400).json({ message: result.error });
-      } else {
-        res.status(200).json(result);
-      }
+    // Extract the required data using regex
+    const rankMatch = snippet.match(/"rank":(\d+)/);
+    const highestRankMatch = snippet.match(/"highestRank":(\d+)/);
+    const divisionNameMatch = snippet.match(/"currentDivisionName":"(.*?)"/);
+
+    if (!rankMatch || !highestRankMatch || !divisionNameMatch) {
+      throw new Error("Unable to extract rank data from the response.");
+    }
+
+    // Prepare the extracted data
+    const rank = parseInt(rankMatch[1], 10);
+    const highestRank = parseInt(highestRankMatch[1], 10);
+    const currentDivisionName = divisionNameMatch[1];
+
+    // Send the extracted data as JSON
+    res.status(200).json({
+      rank,
+      highestRank,
+      currentDivisionName,
     });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: error.message });
+    console.error("Error processing data:", error);
+    res.status(500).json({
+      message: "Error processing data",
+      details: error.message,
+    });
   }
 }
