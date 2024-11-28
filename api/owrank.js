@@ -21,17 +21,18 @@ export default async function handler(req, res) {
     }
 
     // Extract a portion of the text for analysis
-    const snippet = html.slice(startIndex, startIndex + 1000);
+    const snippet = html.slice(startIndex, startIndex + 500);
 
-    // Use regex to match the rank (e.g., "Gold 3")
-    const rankMatch = snippet.match(/<div class="value"[^>]*>\s*([\w\s]+)\s*</);
+    // Search for the rank value after "Support"
+    const rankStartIndex = snippet.indexOf("<!--[-->") + 8; // Start after "<!--[-->"
+    const rankEndIndex = snippet.indexOf("<!--]", rankStartIndex); // End before "<!--]"
 
-    if (!rankMatch) {
+    if (rankStartIndex === -1 || rankEndIndex === -1) {
       throw new Error("Unable to extract Support rank from the response.");
     }
 
     // Extracted rank
-    const supportRank = rankMatch[1].trim();
+    const supportRank = snippet.slice(rankStartIndex, rankEndIndex).trim();
 
     // Send the rank as the plain response
     res.status(200).send(supportRank);
