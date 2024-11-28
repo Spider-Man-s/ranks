@@ -12,20 +12,20 @@ export default async function handler(req, res) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // Get the response as plain text
     const html = await response.text();
 
-    // Search for "Support</h3>"
-    const supportIndex = html.indexOf("Support</h3>");
-    if (supportIndex === -1) {
+    // Find the starting index of the "Support" keyword
+    const startIndex = html.indexOf("Support</h3>");
+    if (startIndex === -1) {
       throw new Error("Support data not found in response.");
     }
 
-    // Extract a portion of the text starting near the "Support" keyword
-    const snippet = html.slice(supportIndex, supportIndex + 1000);
+    // Extract a portion of the text for analysis
+    const snippet = html.slice(startIndex, startIndex + 1000);
 
-    // Use regex to extract the rank value
+    // Use regex to match the rank (e.g., "Gold 3")
     const rankMatch = snippet.match(/<div class="value"[^>]*>\s*([\w\s]+)\s*</);
+
     if (!rankMatch) {
       throw new Error("Unable to extract Support rank from the response.");
     }
