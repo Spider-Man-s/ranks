@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     const currentDivisionName = divisionNameMatch[1];
 
     // Return the message directly instead of wrapping it in JSON
-    res.status(200).send(`Lcyaa's rank in Ranked Reload ZB is: ${currentDivisionName} #${rank} (peak #${highestRank})`);
+    res.status(200).send(`${currentDivisionName} #${rank} (peak #${highestRank})`);
   } catch (error) {
     console.error("Error processing data:", error);
     res.status(500).send("Error processing data");
