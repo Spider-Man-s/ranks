@@ -14,28 +14,32 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    // Find the starting index of the "Support" keyword
-    const startIndex = html.indexOf("Support</h3>");
-    if (startIndex === -1) {
+    // Find the starting index of "Support</h3>"
+    const supportIndex = html.indexOf("Support</h3>");
+    if (supportIndex === -1) {
       throw new Error("Support data not found in response.");
     }
 
     // Extract a portion of the text for analysis
-    const snippet = html.slice(startIndex, startIndex + 500);
+    const snippet = html.slice(supportIndex, supportIndex + 1000);
 
-    // Search for the rank value after "Support"
-    const rankStartIndex = snippet.indexOf("<!--[-->") + 8; // Start after "<!--[-->"
-    const rankEndIndex = snippet.indexOf("<!--]", rankStartIndex); // End before "<!--]"
-
-    if (rankStartIndex === -1 || rankEndIndex === -1) {
-      throw new Error("Unable to extract Support rank from the response.");
+    // Find the first occurrence of "class=\"value\""
+    const valueIndex = snippet.indexOf('class="value"');
+    if (valueIndex === -1) {
+      throw new Error("Rank value not found near Support.");
     }
 
-    // Extracted rank
-    const supportRank = snippet.slice(rankStartIndex, rankEndIndex).trim();
+    // Extract the rank data using the marker [--> and <!--]
+    const rankStart = snippet.indexOf("[-->", valueIndex) + 4;
+    const rankEnd = snippet.indexOf("<!--", rankStart);
+    if (rankStart === -1 || rankEnd === -1) {
+      throw new Error("Unable to extract rank from response.");
+    }
+
+    const rank = snippet.slice(rankStart, rankEnd).trim();
 
     // Send the rank as the plain response
-    res.status(200).send(supportRank);
+    res.status(200).send(rank);
   } catch (error) {
     console.error("Error processing data:", error);
     res.status(500).json({
