@@ -2,8 +2,8 @@ const fetch = require("node-fetch");
 
 export default async function handler(req, res) {
  // const apiKey = "4b095efa978a30e3f3ae7020b8808611";
-  const url =
-    "https://api.scraperapi.com/?api_key=4b095efa978a30e3f3ae7020b8808611&url=https%3A%2F%2Ffortnitetracker.com%2Fprofile%2Fall%2FLcyaa";
+//  const url =
+ //   "https://api.scraperapi.com/?api_key=4b095efa978a30e3f3ae7020b8808611&url=https%3A%2F%2Ffortnitetracker.com%2Fprofile%2Fall%2FLcyaa";
 
   try {
     const response = await fetch(url);
